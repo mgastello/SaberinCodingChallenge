@@ -39,6 +39,8 @@ namespace music_manager_starter.Server.Controllers
             return Ok();
         }
 
+        // add controller route for search
+
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<Song>>> SearchSongs(string query)
         {
@@ -47,6 +49,8 @@ namespace music_manager_starter.Server.Controllers
 
             query = query.ToLower();
             
+            // _context provides access to the database context
+            // _context.Songs provides access to the Songs table in the database
             return await _context.Songs
                 .Where(s => 
                     s.Title.ToLower().Contains(query) || 
