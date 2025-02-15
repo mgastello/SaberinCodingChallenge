@@ -2,6 +2,7 @@
 @page "/{SearchTerm}"
 @using music_manager_starter.Shared
 @inject HttpClient Http
+@inject NavigationManager NavigationManager
 
 @code {
     [Parameter]
@@ -23,6 +24,11 @@
             songs = await Http.GetFromJsonAsync<List<Song>>($"api/songs/search?query={Uri.EscapeDataString(SearchTerm)}");
         }
     }
+
+    private void NavigateToSong(Guid id)
+    {
+        NavigationManager.NavigateTo($"/song/{id}");
+    }
 }
 
 <div class="p-0 min-h-screen bg-pattern flex flex-col items-center justify-center">
@@ -32,7 +38,7 @@
         {
             @foreach (var song in songs)
             {
-                <div class="glass p-6 border border-gray-300 rounded-lg text-white transition-transform transform hover:scale-105 hover:shadow-xl cursor-pointer">
+                <div @onclick="() => NavigateToSong(song.Id)" class="glass p-6 border border-gray-300 rounded-lg text-white transition-transform transform hover:scale-105 hover:shadow-xl cursor-pointer">
                     <h3 class="text-xl font-semibold mb-2">@song.Title</h3>
                     <p class="text-md">Album: <span class="font-light">@song.Album</span></p>
                     <p class="text-md">Artist: <span class="font-light">@song.Artist</span></p>
@@ -62,15 +68,15 @@
         overflow: hidden; 
     }
 
-        .glass:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            pointer-events: none; 
-        }
+    .glass:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        pointer-events: none; 
+    }
 </style>

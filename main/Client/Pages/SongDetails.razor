@@ -1,0 +1,80 @@
+@page "/song/{Id:guid}"
+@using music_manager_starter.Shared
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<div class="p-0 min-h-screen bg-pattern flex flex-col items-center justify-center">
+    @if (song == null)
+    {
+        // add this loading screen to prevent eager loading
+        <p class="text-white text-xl">Loading...</p>
+    }
+    else
+    {
+        <div class="glass p-8 border border-gray-300 rounded-lg text-white max-w-2xl w-full">
+            <button class="mb-6 text-white hover:text-gray-300" @onclick="GoBack">
+                ← Back to Songs
+            </button>
+            
+            <div class="flex flex-col md:flex-row gap-8">
+                <img src="@song.CoverArtUrl" alt="Album cover for @song.Album" class="w-64 h-64 object-cover rounded-lg shadow-lg" />
+                <div class="flex-1">
+                    <h2 class="text-4xl font-bold mb-6">@song.Title</h2>
+                    <div class="space-y-4">
+                        <p class="text-xl"><span class="font-semibold">Artist:</span> @song.Artist</p>
+                        <p class="text-xl"><span class="font-semibold">Album:</span> @song.Album</p>
+                        <p class="text-xl"><span class="font-semibold">Genre:</span> @song.Genre</p>
+                        <p class="text-xl"><span class="font-semibold">Release Date:</span> @song.ReleaseDate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    // get the id of the song from the params
+    public Guid Id { get; set; }
+
+    private Song song;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        song = await Http.GetFromJsonAsync<Song>($"api/songs/{Id}");
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
+
+<style>
+    .bg-pattern {
+        background: linear-gradient( rgba(31, 41, 55, 0.7), rgba(31, 41, 55, 0.7) ), url('dalle.webp');
+        background-size: cover;
+        background-position: center;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        pointer-events: none;
+    }
+</style> 

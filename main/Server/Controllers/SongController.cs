@@ -17,11 +17,25 @@ namespace music_manager_starter.Server.Controllers
             _context = context;
         }
 
-  
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Song>>> GetSongs()
         {
             return await _context.Songs.ToListAsync();
+        }
+
+        // Get a single song by ID
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Song>> GetSong(Guid id)
+        {
+            // uses the id from the params to search for the song in the database
+            var song = await _context.Songs.FindAsync(id);
+
+            if (song == null)
+            {
+                return NotFound();
+            }
+
+            return song;
         }
 
         [HttpPost]
