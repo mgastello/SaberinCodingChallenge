@@ -7,6 +7,10 @@
         <div class="top-bar px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
             <h1 class="text-xl font-semibold">Music</h1>
             <div class="relative">
+                @* 
+                    We bind the search term to the input element when the user inputs a key
+                    We call the search function when the user releases a key
+                *@
                 <input 
                     type="text" 
                     placeholder="Search..." 
@@ -27,10 +31,12 @@
 </div>
 
 @code {
+    // initialize a search term
     private string searchTerm = "";
 
     private void HandleSearch()
     {
+        // add search term to the params
         NavigationManager.NavigateTo($"/{searchTerm}");
     }
 }

@@ -5,16 +5,19 @@
 
 @code {
     [Parameter]
+    // get the search term from the params
     public string SearchTerm { get; set; }
 
     private List<Song> songs;
 
     protected override async Task OnParametersSetAsync()
     {
+        // if the search term is empty, get all songs
         if (string.IsNullOrWhiteSpace(SearchTerm))
         {
             songs = await Http.GetFromJsonAsync<List<Song>>("api/songs");
         }
+        // if the search term is not empty, get the songs that match the search term
         else
         {
             songs = await Http.GetFromJsonAsync<List<Song>>($"api/songs/search?query={Uri.EscapeDataString(SearchTerm)}");
