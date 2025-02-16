@@ -1,0 +1,123 @@
+@page "/playlists"
+@using music_manager_starter.Shared
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<div class="p-6 min-h-screen bg-pattern">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold text-white">My Playlists</h2>
+            <button @onclick="ShowCreatePlaylist" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+                Create New Playlist
+            </button>
+        </div>
+
+        @if (showCreateForm)
+        {
+            <div class="bg-gray-800 p-6 rounded-lg mb-8">
+                <h3 class="text-xl text-white mb-4">Create New Playlist</h3>
+                <div class="flex gap-4">
+                    <input @bind="newPlaylistName" class="flex-grow p-2 rounded bg-gray-700 text-white" placeholder="Enter playlist name" />
+                    <button @onclick="CreatePlaylist" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                        Save
+                    </button>
+                    <button @onclick="CancelCreate" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (playlists == null)
+        {
+            <p class="text-white">Loading...</p>
+        }
+        else if (!playlists.Any())
+        {
+            <p class="text-white">No playlists yet. Create one to get started!</p>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var playlist in playlists)
+                {
+                    <div class="glass p-6 rounded-lg text-white cursor-pointer hover:scale-105 transition"
+                         @onclick="() => NavigateToPlaylist(playlist.Id)">
+                        <h3 class="text-xl font-semibold mb-2">@playlist.Name</h3>
+                        <p class="text-gray-300">@(playlist.SongIds?.Count ?? 0) songs</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Playlist> playlists;
+    private bool showCreateForm = false;
+    private string newPlaylistName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlaylists();
+    }
+
+    private async Task LoadPlaylists()
+    {
+        playlists = await Http.GetFromJsonAsync<List<Playlist>>("api/playlists");
+    }
+
+    private void ShowCreatePlaylist()
+    {
+        showCreateForm = true;
+        newPlaylistName = "";
+    }
+
+    private void CancelCreate()
+    {
+        showCreateForm = false;
+        newPlaylistName = "";
+    }
+
+    private async Task CreatePlaylist()
+    {
+        if (string.IsNullOrWhiteSpace(newPlaylistName))
+            // if the playlist name is empty, don't create a playlist
+            return;
+
+        var playlist = new Playlist
+        {
+            Id = Guid.NewGuid(),
+            Name = newPlaylistName,
+            SongIds = new List<Guid>()
+        };
+
+        var response = await Http.PostAsJsonAsync("api/playlists", playlist);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadPlaylists();
+            showCreateForm = false;
+            newPlaylistName = "";
+        }
+    }
+
+    private void NavigateToPlaylist(Guid id)
+    {
+        NavigationManager.NavigateTo($"/playlist/{id}");
+    }
+}
+
+<style>
+    .bg-pattern {
+        background: linear-gradient(rgba(31, 41, 55, 0.7), rgba(31, 41, 55, 0.7)), url('dalle.webp');
+        background-size: cover;
+        background-position: center;
+    }
+
+    .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+</style> 

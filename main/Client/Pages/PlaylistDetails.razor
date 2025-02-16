@@ -1,0 +1,185 @@
+@page "/playlist/{Id:guid}"
+@using music_manager_starter.Shared
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<div class="p-6 min-h-screen bg-pattern">
+    <div class="max-w-7xl mx-auto">
+        @if (playlist == null)
+        {
+            // if the playlist is null, show a loading message to resolves eager loading issues
+            <p class="text-white">Loading...</p>
+        }
+        else
+        {
+            <div class="mb-8">
+                <button class="text-white hover:text-gray-300 mb-4" @onclick="GoBack">
+                    ← Back to Playlists
+                </button>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-bold text-white">@playlist.Name</h2>
+                    <div class="flex gap-4">
+                        <button @onclick="ShowAddSongs" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+                            Add Songs
+                        </button>
+                        <button @onclick="DeletePlaylist" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                            Delete Playlist
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @if (showAddSongs)
+            {
+                <div class="bg-gray-800 p-6 rounded-lg mb-8">
+                    <h3 class="text-xl text-white mb-4">Add Songs to Playlist</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach (var song in availableSongs)
+                        {
+                            <div class="glass p-4 rounded-lg text-white flex justify-between items-center">
+                                <img src="@song.CoverArtUrl" alt="@song.Title" class="w-24 h-24 rounded-lg">
+                                <div>
+                                    <p class="font-semibold">@song.Title</p>
+                                    <p class="text-sm text-gray-300">@song.Artist</p>
+                                </div>
+                                @if (!playlist.SongIds.Contains(song.Id))
+                                {
+                                    <button @onclick="() => AddSongToPlaylist(song.Id)" 
+                                            class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">
+                                        Add
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button @onclick="() => RemoveSongFromPlaylist(song.Id)"
+                                            class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">
+                                        Remove
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <button @onclick="() => showAddSongs = false" class="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
+                        Done
+                    </button>
+                </div>
+            }
+
+            @if (!playlist.SongIds.Any())
+            {
+                <p class="text-white">No songs in this playlist yet. Click "Add Songs" to get started!</p>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var songId in playlist.SongIds)
+                    {
+                        var song = availableSongs.FirstOrDefault(s => s.Id == songId);
+                        if (song != null)
+                        {
+                            <div class="glass p-6 rounded-lg text-white">
+                                <div class="flex justify-between items-start">
+                                    <img src="@song.CoverArtUrl" alt="@song.Title" class="w-24 h-24 rounded-lg">
+                                    <div>
+                                        <h3 class="text-xl font-semibold mb-2">@song.Title</h3>
+                                        <p class="text-gray-300">@song.Artist</p>
+                                        <p class="text-gray-300">@song.Album</p>
+                                    </div>
+                                    <button @onclick="() => RemoveSongFromPlaylist(song.Id)" 
+                                            class="text-red-500 hover:text-red-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private Playlist playlist;
+    // create a variable to store the list of songs that are available to be added to the playlist
+    private List<Song> availableSongs = new List<Song>();
+    private bool showAddSongs = false;
+
+    // load the playlist and the songs when the page is initialized
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlaylist();
+        await LoadSongs();
+    }
+
+    private async Task LoadPlaylist()
+    {
+        playlist = await Http.GetFromJsonAsync<Playlist>($"api/playlists/{Id}");
+    }
+
+    private async Task LoadSongs()
+    {
+        availableSongs = await Http.GetFromJsonAsync<List<Song>>("api/songs");
+    }
+
+    private void ShowAddSongs()
+    {
+        showAddSongs = true;
+    }
+
+    private async Task AddSongToPlaylist(Guid songId)
+    {
+        if (!playlist.SongIds.Contains(songId))
+        {
+            playlist.SongIds.Add(songId);
+            var response = await Http.PutAsJsonAsync($"api/playlists/{Id}", playlist);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadPlaylist();
+            }
+        }
+    }
+
+    private async Task RemoveSongFromPlaylist(Guid songId)
+    {
+        playlist.SongIds.Remove(songId);
+        var response = await Http.PutAsJsonAsync($"api/playlists/{Id}", playlist);
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadPlaylist();
+        }
+    }
+
+    private async Task DeletePlaylist()
+    {
+        var response = await Http.DeleteAsync($"api/playlists/{Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/playlists");
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/playlists");
+    }
+}
+
+<style>
+    .bg-pattern {
+        background: linear-gradient(rgba(31, 41, 55, 0.7), rgba(31, 41, 55, 0.7)), url('dalle.webp');
+        background-size: cover;
+        background-position: center;
+    }
+
+    .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+</style> 

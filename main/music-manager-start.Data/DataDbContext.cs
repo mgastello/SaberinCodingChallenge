@@ -13,6 +13,7 @@ namespace music_manager_starter.Data
         public DataDbContext(DbContextOptions<DataDbContext> options) : base(options) { }
 
         public DbSet<Song> Songs { get; set; }
+        public DbSet<Playlist> Playlists { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +26,11 @@ namespace music_manager_starter.Data
                 new Song { Id = Guid.Parse("b7cc1c82-77e2-40d0-8bc2-d7e05962c0e3"), Title = "Utah", Artist = "French Cassettes", Album = "The Great Escape", Genre = "Indie", ReleaseDate = "Dec 11, 2020", CoverArtUrl = "/images/albums/TheGreatEscape.jpg" },
                 new Song { Id = Guid.Parse("22aa6f84-06d8-4a0e-bdad-3000b35b5b5f"), Title = "Something Real", Artist = "Post Malone", Album = "Twelve Carat Toothache", Genre = "Hip Hop", ReleaseDate = "Jul 28, 2023", CoverArtUrl = "/images/albums/SomethingReal.jpg" }
             );
+
+            modelBuilder.Entity<Playlist>()
+            // add relationship between playlist and song
+                .HasMany(p => p.Songs)
+                .WithMany();
         }
     }
 }
